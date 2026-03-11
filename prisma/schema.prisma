@@ -1,0 +1,57 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "admin"]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts     Post[]
+  userRoles UserRole[]
+
+  @@schema("public")
+}
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  authorId    Int
+  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@schema("public")
+}
+
+model Role {
+  id        Int        @id @default(autoincrement())
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  userRoles UserRole[]
+
+  @@schema("admin")
+}
+
+model UserRole {
+  id     Int  @id @default(autoincrement())
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  @@schema("admin")
+}
