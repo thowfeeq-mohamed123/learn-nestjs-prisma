@@ -6,7 +6,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["public", "admin"]
+  schemas  = ["prisma"]
 }
 
 model User {
@@ -21,7 +21,7 @@ model User {
   posts     Post[]
   userRoles UserRole[]
 
-  @@schema("public")
+  @@schema("prisma")
 }
 
 model Post {
@@ -33,7 +33,7 @@ model Post {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@schema("public")
+  @@schema("prisma")
 }
 
 model Role {
@@ -43,7 +43,7 @@ model Role {
   updatedAt DateTime   @updatedAt
   userRoles UserRole[]
 
-  @@schema("admin")
+  @@schema("prisma")
 }
 
 model UserRole {
@@ -53,5 +53,5 @@ model UserRole {
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
-  @@schema("admin")
+  @@schema("prisma")
 }

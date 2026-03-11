@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/user-post-dto';
 import { UserMap } from './user.datamapper';
@@ -23,6 +24,8 @@ export class UserService {
           description: 'Payload user email already exists',
         });
       }
+      const encryptPassword = await this.encryptPassword(payload.password, 10);
+      payload.password = encryptPassword;
       await this.prismaSerive.user.create({ data: payload });
     } catch (error) {
       throw new InternalServerErrorException('Something went wrong', {
@@ -30,6 +33,10 @@ export class UserService {
         description: error?.message ?? null,
       });
     }
+  }
+
+  private async encryptPassword(plainPassword, saltRound): Promise<string> {
+    return bcrypt.hash(plainPassword, saltRound);
   }
 
   async getUsers(page = 1, limit = 10): Promise<UsersDTO> {

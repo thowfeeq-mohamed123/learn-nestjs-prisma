@@ -6,7 +6,4 @@ export class CreatePostDto {
 
   @IsString()
   description: string;
-
-  @IsNumber()
-  authorId: number;
 }

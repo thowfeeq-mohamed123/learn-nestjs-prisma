@@ -1,8 +1,8 @@
 -- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "admin";
+CREATE SCHEMA IF NOT EXISTS "prisma";
 
 -- CreateTable
-CREATE TABLE "public"."User" (
+CREATE TABLE "prisma"."User" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE "public"."User" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Post" (
+CREATE TABLE "prisma"."Post" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE "public"."Post" (
 );
 
 -- CreateTable
-CREATE TABLE "admin"."Role" (
+CREATE TABLE "prisma"."Role" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -37,7 +37,7 @@ CREATE TABLE "admin"."Role" (
 );
 
 -- CreateTable
-CREATE TABLE "admin"."UserRole" (
+CREATE TABLE "prisma"."UserRole" (
     "id" SERIAL NOT NULL,
     "roleId" INTEGER NOT NULL,
     "userId" INTEGER NOT NULL,
@@ -46,13 +46,13 @@ CREATE TABLE "admin"."UserRole" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
+CREATE UNIQUE INDEX "User_email_key" ON "prisma"."User"("email");
 
 -- AddForeignKey
-ALTER TABLE "public"."Post" ADD CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "prisma"."Post" ADD CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "prisma"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "admin"."UserRole" ADD CONSTRAINT "UserRole_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "admin"."Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "prisma"."UserRole" ADD CONSTRAINT "UserRole_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "prisma"."Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "admin"."UserRole" ADD CONSTRAINT "UserRole_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "prisma"."UserRole" ADD CONSTRAINT "UserRole_userId_fkey" FOREIGN KEY ("userId") REFERENCES "prisma"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
