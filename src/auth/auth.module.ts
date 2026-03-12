@@ -6,7 +6,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { StringValue } from 'ms';
 import { Algorithm } from 'jsonwebtoken';
 import { JwtStrategy } from '../../common/strategy/jwt-auth-strategy';
-import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -25,7 +24,6 @@ import { UserModule } from 'src/user/user.module';
         },
       }),
     }),
-    UserModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
