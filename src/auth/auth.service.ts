@@ -3,9 +3,11 @@ import {
   HttpException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { StringValue } from 'ms';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDTO } from './dto/login-post.dto';
 import { CreateUserDto } from '../user/dto/user-post-dto';
@@ -17,7 +19,9 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async createUser(payload: CreateUserDto): Promise<{ accessToken: string }> {
+  async createUser(
+    payload: CreateUserDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       const user = await this.prismaService.user.findFirst({
         where: { email: payload.email },
@@ -32,7 +36,7 @@ export class AuthService {
       payload.password = encryptPassword;
       const newUser = await this.prismaService.user.create({ data: payload });
 
-      return this.jwtTokenGenerate(newUser);
+      return this.generateTokens(newUser);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -48,7 +52,9 @@ export class AuthService {
     return bcrypt.hash(plainPassword, saltRound);
   }
 
-  async login(payload: LoginDTO): Promise<{ accessToken: string }> {
+  async login(
+    payload: LoginDTO,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       const { email, password } = payload;
 
@@ -69,7 +75,7 @@ export class AuthService {
           description: 'User password invalid',
         });
       }
-      return this.jwtTokenGenerate(user);
+      return this.generateTokens(user);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -81,18 +87,58 @@ export class AuthService {
     }
   }
 
-  private async jwtTokenGenerate(user): Promise<{ accessToken: string }> {
+  async generateTokens(
+    user,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = {
+      sub: user?.id ?? null,
+      email: user?.email ?? null,
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: process.env.JWT_SECRET,
+        expiresIn: process.env.JWT_EXPIRES_IN as StringValue,
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: process.env.JWT_REFRESH_SECRET,
+        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN as StringValue,
+      }),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async refreshAccessToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string }> {
     try {
-      const jwtPayload = {
-        userId: user.id,
-        email: user.email,
-      };
-      const token = this.jwtService.sign(jwtPayload);
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+
+      const accessToken = await this.jwtService.signAsync(
+        {
+          sub: payload.sub,
+          email: payload.email,
+        },
+        {
+          secret: process.env.JWT_SECRET,
+          expiresIn: process.env.JWT_EXPIRES_IN as StringValue,
+        },
+      );
+
       return {
-        accessToken: token,
+        accessToken,
       };
     } catch (error) {
-      throw new InternalServerErrorException('Someting went wrong', {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid refresh token', {
         cause: new Error(),
         description: error?.message ?? null,
       });
